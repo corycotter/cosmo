@@ -19,8 +19,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 1. * 10**12.0 / 1e10 * 0.704
+mass_max = 3. * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -54,25 +54,81 @@ for i in ids:
 
 secondary_subhalo = []
 temp = []
+temp2 = primary_subhalo[:]
 x = 0
 for i in ids2:
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     secondary_subhalo.append(get(url))
     temp.append(secondary_subhalo[-1])
-    if temp[x]['grnr'] != primary_subhalo[x]['grnr']:
+    if temp[x]['grnr'] != temp2[x]['grnr']:
         secondary_subhalo.remove(temp[x])
+        primary_subahalo.remove(temp2[x])
     x += 1
 print len(secondary_subhalo)
 
-secondary_subhalo_temp = secondary_subhalo[:]
-for i in secondary_subhalo_temp:
-    if i['mass'] <= 5.632 or i['mass'] >= 22.528:
-        secondary_subhalo.remove(i)
+x = 0
+temp = secondary_subhalo[:]
+temp2 = primary_subhalo[:]
+for i in range(len(temp)):
+    if temp[i]['mass'] <= 5.632 or temp[i]['mass'] >= 22.528:
+        secondary_subhalo.remove(temp[i])
+        primary_subhalo.remove(temp2[i])
+    x += 1
 print len(secondary_subhalo)
+print len(primary_subhalo)
+
 
 vel = []
+vec_vel = []
 for i in secondary_subhalo:
-    vel.append(np.sqrt(i['vel_x']**2 + i['vel_y']**2 + i['vel_z']**2))
+    vec_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
+
+for i in vec_vel:
+    vel.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 
 plt.hist(vel, 20)
+plt.title("Velocities of LMC Subhalos")
+plt.ylabel("Number of Subhalos")
+plt.xlabel(r'Velocity $km/s$')
+plt.show()
+
+
+sub_dist = []
+for i in secondary_subhalo:
+    sub_dist.append([i['pos_x'], i['pos_y'], i['pos_z']])
+
+halo_dist = []
+for i in primary_subhalo:
+    halo_dist.append([i['pos_x'], i['pos_y'], i['pos_z']])
+
+vec_dist = []
+for i in range(len(halo_dist)):
+    vec_dist.append([sub_dist[i][0] - halo_dist[i][0], sub_dist[i][1] - halo_dist[i][1], sub_dist[i][2] - halo_dist[i][2]])
+    for j in range(3):
+        if (vec_dist[-1][j] > (1000 * 0.704)):
+            vec_dist[-1][j] = vec_dist[-1][j] - 106500 * 0.704
+
+dist = []
+for i in vec_dist:
+    dist.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2) / 0.704)
+
+plt.hist(dist, 20)
+plt.title("Distances of LMC Subhalos")
+plt.xlabel(r'Distance ($kpc$)')
+plt.ylabel('Number of Subhalos')
+plt.show()
+
+ang = []
+vec_ang = np.cross(vec_dist, vec_vel)
+for i in vec_ang:
+    ang.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
+x = 0
+for i in secondary_subhalo:
+    ang[x] = i['mass'] * ang[x]
+    x += 1
+
+plt.hist(ang, 20)
+plt.title("Angular Momentum of LMC Subhalos")
+plt.xlabel(r'Angular Momentum ($M_{\odot} kpc km / s$)')
+plt.ylabel('Number of Subhalos')
 plt.show()
