@@ -2,6 +2,16 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 
+def distance(first, second):
+    temp = []
+    temp.append(first['pos_x'] - second['pos_x'])
+    temp.append(first['pos_y'] - second['pos_y'])
+    temp.append(first['pos_z'] - second['pos_z'])
+    for i in range(3):
+        if temp[i] > (1000 * 0.704):
+            temp[i] = temp[i] - 106500 * 0.704
+    return np.sqrt(temp[0]**2 + temp[1]**2 + temp[2]**2) / 0.704
+
 def get(path, params=None):
     headers = {"api-key":"7fa937edbda6181b69c3819d691ed5b0"}
     r = requests.get(path, params=params, headers=headers)
@@ -20,7 +30,7 @@ def get(path, params=None):
     return r
 
 mass_min = 1. * 10**12.0 / 1e10 * 0.704
-mass_max = 3. * 10**12.0 / 1e10 * 0.704
+mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -56,15 +66,30 @@ secondary_subhalo = []
 temp = []
 temp2 = primary_subhalo[:]
 x = 0
+y = 0
 for i in ids2:
-    url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
-    secondary_subhalo.append(get(url))
-    temp.append(secondary_subhalo[-1])
-    if temp[x]['grnr'] != temp2[x]['grnr']:
-        secondary_subhalo.remove(temp[x])
-        primary_subahalo.remove(temp2[x])
-    x += 1
+    for j in range(5):
+        url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
+        secondary_subhalo.append(get(url))
+        temp.append(secondary_subhalo[-1])
+        if (temp[x]['grnr'] != temp2[y]['grnr']):
+            secondary_subhalo.remove(temp[x])
+            primary_subhalo.remove(temp2[y])
+            x += 1
+            break
+        elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] / 0.704)):
+            secondary_subhalo.remove(temp[x])
+            if (j == 4):
+                primary_subhalo.remove(temp2[y])
+            x += 1
+        else:
+            x += 1
+            break
+    y += 1
 print len(secondary_subhalo)
+for i in range(len(primary_subhalo)):
+    print primary_subhalo[i]['id']
+    print secondary_subhalo[i]['id']
 
 x = 0
 temp = secondary_subhalo[:]
@@ -76,6 +101,7 @@ for i in range(len(temp)):
     x += 1
 print len(secondary_subhalo)
 print len(primary_subhalo)
+
 
 
 vel = []
@@ -91,6 +117,7 @@ plt.title("Velocities of LMC Subhalos")
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
 plt.show()
+
 
 
 sub_dist = []
