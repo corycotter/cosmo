@@ -29,16 +29,17 @@ def get(path, params=None):
 
     return r
 
-mass_min = 1. * 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
+mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
 url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos" + search_query
 
-subhalos = get(url, {'limit':2000})
+subhalos = get(url, {'limit':5000})
 
 print subhalos['count']
+
 
 ids = [subhalos['results'][i]['id'] for i in range(subhalos['count'])]
 print len(ids)
@@ -77,7 +78,7 @@ for i in ids2:
             primary_subhalo.remove(temp2[y])
             x += 1
             break
-        elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] / 0.704)):
+        elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] * 2. / 0.704)):
             secondary_subhalo.remove(temp[x])
             if (j == 4):
                 primary_subhalo.remove(temp2[y])
@@ -87,9 +88,7 @@ for i in ids2:
             break
     y += 1
 print len(secondary_subhalo)
-for i in range(len(primary_subhalo)):
-    print primary_subhalo[i]['id']
-    print secondary_subhalo[i]['id']
+
 
 x = 0
 temp = secondary_subhalo[:]
@@ -102,6 +101,9 @@ for i in range(len(temp)):
 print len(secondary_subhalo)
 print len(primary_subhalo)
 
+for i in range(len(primary_subhalo)):
+    print primary_subhalo[i]['id']
+    print secondary_subhalo[i]['id']
 
 
 vel = []
@@ -112,12 +114,14 @@ for i in secondary_subhalo:
 for i in vec_vel:
     vel.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 
+print np.mean(vel)
+print np.std(vel)
+
 plt.hist(vel, 20)
 plt.title("Velocities of LMC Subhalos")
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
 plt.show()
-
 
 
 sub_dist = []
@@ -139,6 +143,9 @@ dist = []
 for i in vec_dist:
     dist.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2) / 0.704)
 
+print np.mean(dist)
+print np.std(dist)
+
 plt.hist(dist, 20)
 plt.title("Distances of LMC Subhalos")
 plt.xlabel(r'Distance ($kpc$)')
@@ -153,6 +160,9 @@ x = 0
 for i in secondary_subhalo:
     ang[x] = i['mass'] * ang[x]
     x += 1
+
+print np.mean(ang)
+print np.std(ang)
 
 plt.hist(ang, 20)
 plt.title("Angular Momentum of LMC Subhalos")
