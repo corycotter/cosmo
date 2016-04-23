@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
-mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
+mass_min = 1 * 10**12.0 / 1e10 * 0.704
+mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -44,18 +44,41 @@ print subhalos['count']
 ids = [subhalos['results'][i]['id'] for i in range(subhalos['count'])]
 print len(ids)
 
-ids2 = ids[:]
 primary_subhalo = []
-temp = []
-x = 0
-for i in ids2:
+for i in ids:
+    print ids.index(i)
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     primary_subhalo.append(get(url))
-    temp.append(primary_subhalo[-1])
-    if temp[x]['primary_flag'] != 1:
-        ids.remove(i)
-        primary_subhalo.remove(temp[x])
-    x += 1
+
+potential_sec_sub = []
+for i in primary_subhalo:
+    print primary_subhalo.index(i)
+    rad = 2 * i['vmaxrad']
+    xlow = i['pos_x'] - rad
+    xhigh = i['pos_x'] + rad
+    ylow = i['pos_y'] - rad
+    yhigh = i['pos_y'] + rad
+    zlow = i['pos_z'] - rad
+    zhigh = i['pos_z'] + rad
+    mass_min = 5.632
+    mass_max = 22.528
+    search_query = "?pos_x__gt=" + str(xlow) + "&pos_x__lt=" + str(xhigh) + "&pos_y__gt=" + str(ylow) + "&pos_y__lt=" + str(yhigh) + "&pos_z__gt=" + str(zlow) + "&pos_z__lt=" + str(zhigh) + "&mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
+    url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos" + search_query
+    potential_sec_sub.append(get(url))
+print potential_sec_sub
+
+secondary_subhalo = []
+x = 0
+while x < len(primary_subhalo):
+    if (potential_sec_sub[x] == None):
+        primary_subhalo.pop(x)
+    else:
+        secondary_subhalo.append(potential_sec_sub[x])
+        x += 1
+print secondary_subhalo
+print len(secondary_subhalo)
+print len(primary_subhalo)
+exit()
 
 print len(ids)
 print len(primary_subhalo)
