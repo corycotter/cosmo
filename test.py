@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 1 * 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 1. * 10**12.0 / 1e10 * 0.704
+mass_max = 3. * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -50,6 +50,7 @@ for i in ids:
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     primary_subhalo.append(get(url))
 
+'''
 potential_sec_sub = []
 for i in primary_subhalo:
     print primary_subhalo.index(i)
@@ -62,7 +63,7 @@ for i in primary_subhalo:
     zhigh = i['pos_z'] + rad
     mass_min = 5.632
     mass_max = 22.528
-    search_query = "?pos_x__gt=" + str(xlow) + "&pos_x__lt=" + str(xhigh) + "&pos_y__gt=" + str(ylow) + "&pos_y__lt=" + str(yhigh) + "&pos_z__gt=" + str(zlow) + "&pos_z__lt=" + str(zhigh) + "&mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
+    search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max) + "&pos_x__gt=" + str(xlow) + "&pos_x__lt=" + str(xhigh) + "&pos_y__gt=" + str(ylow) + "&pos_y__lt=" + str(yhigh) + "&pos_z__gt=" + str(zlow) + "&pos_z__lt=" + str(zhigh)
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos" + search_query
     potential_sec_sub.append(get(url))
 print potential_sec_sub
@@ -70,7 +71,7 @@ print potential_sec_sub
 secondary_subhalo = []
 x = 0
 while x < len(primary_subhalo):
-    if (potential_sec_sub[x] == None):
+    if (potential_sec_sub[x]['results'] == []):
         primary_subhalo.pop(x)
     else:
         secondary_subhalo.append(potential_sec_sub[x])
@@ -79,7 +80,7 @@ print secondary_subhalo
 print len(secondary_subhalo)
 print len(primary_subhalo)
 exit()
-
+'''
 print len(ids)
 print len(primary_subhalo)
 ids2 = []
@@ -92,7 +93,8 @@ temp2 = primary_subhalo[:]
 x = 0
 y = 0
 for i in ids2:
-    for j in range(5):
+    print y
+    for j in range(2):
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
         secondary_subhalo.append(get(url))
         temp.append(secondary_subhalo[-1])
@@ -103,7 +105,7 @@ for i in ids2:
             break
         elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] * 2. / 0.704)):
             secondary_subhalo.remove(temp[x])
-            if (j == 4):
+            if (j == 1):
                 primary_subhalo.remove(temp2[y])
             x += 1
         else:
