@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 1 * 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
+mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -47,7 +47,6 @@ ids = [subhalos['results'][i]['id'] for i in range(subhalos['count'])]
 primary_subhalo = []
 for i in ids:
     #print ids.index(i)
-    #print i
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     primary_subhalo.append(get(url))
     if ids.index(i) % 50 == 0:
@@ -99,7 +98,7 @@ sum_vir_rad = 0.
 for i in ids2:
     if y % 50 == 0:
         print y
-    for j in range(2):
+    for j in range(1):
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
         secondary_subhalo.append(get(url))
         temp.append(secondary_subhalo[-1])
@@ -109,9 +108,9 @@ for i in ids2:
             x += 1
             sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             break
-        elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] * 2. / 0.704)):
+        elif (distance(temp[x],temp2[y]) > (1000 / 0.704)):
             secondary_subhalo.remove(temp[x])
-            if (j == 1):
+            if (j == 0):
                 primary_subhalo.remove(temp2[y])
                 sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             x += 1
@@ -120,7 +119,7 @@ for i in ids2:
             sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             break
     y += 1
-print "Number of Milky Way mass galaxies with companions in 2*VirRadius: ", len(secondary_subhalo)
+print "Number of Milky Way mass galaxies with companions: ", len(secondary_subhalo)
 print "Average Virial Radius: ", sum_vir_rad / len(ids2)
 
 
@@ -134,6 +133,7 @@ for i in range(len(temp)):
     x += 1
 
 print "Number of LMC candidates: ", len(secondary_subhalo)
+
 
 vel = []
 vec_vel = []
@@ -164,9 +164,13 @@ for i in primary_subhalo:
 vec_dist = []
 for i in range(len(halo_dist)):
     vec_dist.append([sub_dist[i][0] - halo_dist[i][0], sub_dist[i][1] - halo_dist[i][1], sub_dist[i][2] - halo_dist[i][2]])
+    '''
     for j in range(3):
         if (vec_dist[-1][j] > (1000 * 0.704)):
-            vec_dist[-1][j] = vec_dist[-1][j] - 106500 * 0.704
+            #vec_dist[-1][j] = vec_dist[-1][j] - 106500 * 0.704
+        elif (vec_dist[-1][j] < (-1000 * 0.704)):
+            #vec_dist[-1][j] = vec_dist[-1][j] + 106500 * 0.704
+    '''
 
 dist = []
 for i in vec_dist:
