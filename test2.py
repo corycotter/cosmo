@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
-mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
+mass_min = 1 * 10**12.0 / 1e10 * 0.704
+mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -135,19 +135,32 @@ for i in range(len(temp)):
 print "Number of LMC candidates: ", len(secondary_subhalo)
 
 
-vel = []
+
+sub_vel = []
 vec_vel = []
 for i in secondary_subhalo:
-    vec_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
+    sub_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
 
+halo_vel = []
+for i in primary_subhalo:
+    halo_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
+
+for i in range(len(halo_vel)):
+    vec_vel.append([sub_vel[i][0] - halo_vel[i][0], sub_vel[i][1] - halo_vel[i][1], sub_vel[i][2] - halo_vel[i][2]])
+
+vel = []
 for i in vec_vel:
     vel.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 
 print np.mean(vel)
 print np.std(vel)
 
+mu1 = np.mean(vel)
+sigma1 = np.std(vel)
+
 plt.hist(vel, 20)
 plt.title("Velocities of LMC Subhalos")
+plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu1, sigma1))
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
 plt.show()
@@ -179,8 +192,12 @@ for i in vec_dist:
 print np.mean(dist)
 print np.std(dist)
 
+mu2 = np.mean(dist)
+sigma2 = np.std(dist)
+
 plt.hist(dist, 20)
 plt.title("Distances of LMC Subhalos")
+plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu2, sigma2))
 plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
 plt.show()
@@ -194,11 +211,78 @@ for i in secondary_subhalo:
     ang[x] = i['mass'] * ang[x]
     x += 1
 
+for i in range(len(ang)):
+    ang[i] = ang[i] * 3.086e16 * 1.99e30
+
 print np.mean(ang)
 print np.std(ang)
 
+mu3 = np.mean(ang)
+sigma3 = np.std(ang)
+
 plt.hist(ang, 20)
 plt.title("Angular Momentum of LMC Subhalos")
-plt.xlabel(r'Angular Momentum ($M_{\odot} kpc km / s$)')
+plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
+plt.xlabel(r'Angular Momentum ($M_{\odot} kpc^2 / s$)')
+plt.ylabel('Number of Subhalos')
+plt.show()
+
+
+
+
+tertiary_subhalo = []
+temp = []
+new_sec_sub = secondary_subhalo[:]
+x = 0
+y = 0
+for i in secondary_subhalo:
+    if y % 50 == 0:
+        print y
+    for j in range(1):
+        url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i['id'] + 1)
+        tertiary_subhalo.append(get(url))
+        temp.append(tertiary_subhalo[-1])
+        if (temp[x]['grnr'] != i['grnr']):
+            tertiary_subhalo.remove(temp[x])
+            new_sec_sub.remove(i)
+            x += 1
+            break
+        elif (distance(temp[x],i) > (1000 / 0.704)):
+            tertiary_subhalo.remove(temp[x])
+            if (j == 0):
+                new_sec_sub.remove(i)
+            x += 1
+        else:
+            x += 1
+            break
+    y += 1
+
+
+x = 0
+temp = tertiary_subhalo[:]
+temp2 = new_sec_sub[:]
+for i in range(len(temp)):
+    if temp[i]['mass'] <= 2.816 or temp[i]['mass'] >= 11.264:
+        tertiary_subhalo.remove(temp[i])
+        new_sec_sub.remove(temp2[i])
+    x += 1
+
+print "Number of SMC analogs in systems with LMC analogs: ", len(tertiary_subhalo)
+
+
+smc_dist = []
+for i in range(len(tertiary_subhalo)):
+    smc_dist.append(distance(tertiary_subhalo[i], new_sec_sub[i]))
+
+print np.mean(smc_dist)
+print np.std(smc_dist)
+
+mu4 = np.mean(smc_dist)
+sigma4 = np.std(smc_dist)
+
+plt.hist(smc_dist, 20)
+plt.title("Distances of SMC Subhalos")
+plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu4, sigma4))
+plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
 plt.show()
