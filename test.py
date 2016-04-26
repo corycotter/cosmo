@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
-mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
+mass_min = 1 * 10**12.0 / 1e10 * 0.704
+mass_max = 2 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -45,13 +45,17 @@ ids = [subhalos['results'][i]['id'] for i in range(subhalos['count'])]
 #print len(ids)
 
 primary_subhalo = []
-for i in ids:
+temp = ids[:]
+for i in temp:
     #print ids.index(i)
     #print i
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     primary_subhalo.append(get(url))
-    if ids.index(i) % 50 == 0:
-        print ids.index(i)
+    if primary_subhalo[-1]['primary_flag'] != 1:
+        ids.remove(i)
+        primary_subhalo.pop()
+    if temp.index(i) % 50 == 0:
+        print temp.index(i)
 
 '''
 potential_sec_sub = []
@@ -103,21 +107,22 @@ for i in ids2:
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
         secondary_subhalo.append(get(url))
         temp.append(secondary_subhalo[-1])
+        vir_rad = get("http://www.illustris-project.org/api/Illustris-1/snapshots/135/halos/" + str(temp2[y]['grnr']) + "/info.json")['Group']['Group_R_Crit200']
         if (temp[x]['grnr'] != temp2[y]['grnr']):
             secondary_subhalo.remove(temp[x])
             primary_subhalo.remove(temp2[y])
             x += 1
-            sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
+            sum_vir_rad += vir_rad / 0.704
             break
-        elif (distance(temp[x],temp2[y]) > (temp2[y]['vmaxrad'] * 2. / 0.704)):
+        elif (distance(temp[x],temp2[y]) > (vir_rad / 0.704)):
             secondary_subhalo.remove(temp[x])
             if (j == 1):
                 primary_subhalo.remove(temp2[y])
-                sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
+                sum_vir_rad += vir_rad / 0.704
             x += 1
         else:
             x += 1
-            sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
+            sum_vir_rad += vir_rad / 0.704
             break
     y += 1
 print "Number of Milky Way mass galaxies with companions in 2*VirRadius: ", len(secondary_subhalo)
@@ -235,6 +240,7 @@ for i in secondary_subhalo:
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i['id'] + 1)
         tertiary_subhalo.append(get(url))
         temp.append(tertiary_subhalo[-1])
+        vir_rad = get("http://www.illustris-project.org/api/Illustris-1/snapshots/135/halos/" + str(i['grnr']) + "/info.json")['Group']['Group_R_Crit200']
         if (temp[x]['grnr'] != i['grnr']):
             tertiary_subhalo.remove(temp[x])
             new_sec_sub.remove(i)
