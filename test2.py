@@ -45,12 +45,16 @@ ids = [subhalos['results'][i]['id'] for i in range(subhalos['count'])]
 #print len(ids)
 
 primary_subhalo = []
-for i in ids:
+temp = ids[:]
+for i in temp:
     #print ids.index(i)
     url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
     primary_subhalo.append(get(url))
-    if ids.index(i) % 50 == 0:
-        print ids.index(i)
+    if primary_subhalo[-1]['primary_flag'] != 1:
+        ids.remove(i)
+        primary_subhalo.pop()
+    if temp.index(i) % 50 == 0:
+        print temp.index(i)
 
 '''
 potential_sec_sub = []
