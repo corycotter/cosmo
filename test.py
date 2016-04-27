@@ -29,8 +29,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
-mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
+mass_min = 1 * 10**12.0 / 1e10 * 0.704
+mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -207,11 +207,11 @@ for i in vec_ang:
     ang.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 x = 0
 for i in secondary_subhalo:
-    ang[x] = i['mass'] * ang[x]
+    ang[x] = i['mass'] * 1e10 / 0.704 * ang[x]
     x += 1
 
 for i in range(len(ang)):
-    ang[i] = ang[i] * 3.086e16 * 1.99e30
+    ang[i] = ang[i] * 6.136e52
 
 print "Average angular momentum of LMC", np.mean(ang)
 print "Standard deviation of angular momentum of LMC: ", np.std(ang)
@@ -222,7 +222,7 @@ sigma3 = np.std(ang)
 plt.hist(ang, 20)
 plt.title("Angular Momentum of LMC Subhalos")
 plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
-plt.xlabel(r'Angular Momentum ($M_{\odot} kpc^2 / s$)')
+plt.xlabel(r'Angular Momentum ($kg m^2 / s$)')
 plt.ylabel('Number of Subhalos')
 plt.savefig("lmc_ang.png")
 
