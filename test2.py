@@ -16,7 +16,9 @@ def get(path, params=None):
     headers = {"api-key":"7fa937edbda6181b69c3819d691ed5b0"}
     r = requests.get(path, params=params, headers=headers)
 
-    r.raise_for_status()
+    if r.status_code != requests.codes.ok:
+        r = requests.get(path, params=params, headers=headers)
+        r.raise_for_status()
 
     if r.headers['content-type'] == 'application/json':
         return r.json()
@@ -29,8 +31,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 1 * 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
+mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -53,7 +55,7 @@ for i in temp:
     if primary_subhalo[-1]['primary_flag'] != 1:
         ids.remove(i)
         primary_subhalo.pop()
-    if temp.index(i) % 50 == 0:
+    if temp.index(i) % 500 == 0:
         print temp.index(i)
 
 '''
@@ -98,9 +100,8 @@ temp = []
 temp2 = primary_subhalo[:]
 x = 0
 y = 0
-sum_vir_rad = 0.
 for i in ids2:
-    if y % 50 == 0:
+    if y % 500 == 0:
         print y
     for j in range(1):
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i)
@@ -110,21 +111,17 @@ for i in ids2:
             secondary_subhalo.remove(temp[x])
             primary_subhalo.remove(temp2[y])
             x += 1
-            sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             break
         elif (distance(temp[x],temp2[y]) > (1000 / 0.704)):
             secondary_subhalo.remove(temp[x])
             if (j == 0):
                 primary_subhalo.remove(temp2[y])
-                sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             x += 1
         else:
             x += 1
-            sum_vir_rad += temp2[y]['vmaxrad'] / 0.704
             break
     y += 1
 print "Number of Milky Way mass galaxies with companions: ", len(secondary_subhalo)
-print "Average Virial Radius: ", sum_vir_rad / len(ids2)
 
 
 x = 0
@@ -156,8 +153,8 @@ vel = []
 for i in vec_vel:
     vel.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 
-print np.mean(vel)
-print np.std(vel)
+print "mean vel: ", np.mean(vel)
+print "std vel: ", np.std(vel)
 
 mu1 = np.mean(vel)
 sigma1 = np.std(vel)
@@ -167,7 +164,8 @@ plt.title("Velocities of LMC Subhalos")
 plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu1, sigma1))
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
-plt.show()
+plt.savefig("lmc_vel_none.png")
+plt.clf()
 
 
 sub_dist = []
@@ -193,8 +191,8 @@ dist = []
 for i in vec_dist:
     dist.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2) / 0.704)
 
-print np.mean(dist)
-print np.std(dist)
+print "mean dist: ", np.mean(dist)
+print "std dist: ", np.std(dist)
 
 mu2 = np.mean(dist)
 sigma2 = np.std(dist)
@@ -204,7 +202,8 @@ plt.title("Distances of LMC Subhalos")
 plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu2, sigma2))
 plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
-plt.show()
+plt.savefig("lmc_dist_none.png")
+plt.clf()
 
 ang = []
 vec_ang = np.cross(vec_dist, vec_vel)
@@ -212,14 +211,14 @@ for i in vec_ang:
     ang.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 x = 0
 for i in secondary_subhalo:
-    ang[x] = i['mass'] * ang[x]
+    ang[x] = i['mass'] * ang[x] * 1e10 / 0.704
     x += 1
 
 for i in range(len(ang)):
-    ang[i] = ang[i] * 3.086e16 * 1.99e30
+    ang[i] = ang[i] * 6.136e52
 
-print np.mean(ang)
-print np.std(ang)
+print "mean ang: ", np.mean(ang)
+print "std ang: ", np.std(ang)
 
 mu3 = np.mean(ang)
 sigma3 = np.std(ang)
@@ -227,20 +226,54 @@ sigma3 = np.std(ang)
 plt.hist(ang, 20)
 plt.title("Angular Momentum of LMC Subhalos")
 plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
-plt.xlabel(r'Angular Momentum ($M_{\odot} kpc^2 / s$)')
+plt.xlabel(r'Angular Momentum ($kg m^2 / s$)')
 plt.ylabel('Number of Subhalos')
-plt.show()
+plt.savefig("lmc_ang_none.png")
+plt.clf()
 
 
+prim_mass = []
+sec_mass = []
+for i in range(len(primary_subhalo)):
+    prim_mass.append(primary_subhalo[i]['mass'] * 1e10 / 0.704)
+    sec_mass.append(secondary_subhalo[i]['mass'] * 1e10 / 0.704)
+
+print "Average mass of LMC hosts: ", np.mean(prim_mass)
+print "Standard deviation of mass of LMC hosts: ", np.std(prim_mass)
+print "Average mass of LMC: ", np.mean(sec_mass)
+print "Standard deviation of mass of LMC: ", np.std(sec_mass)
+
+plt.hist(sec_mass, 20)
+plt.title("Mass Distribution of LMC Subhalos")
+plt.ylabel(r'Number of Subhalos')
+plt.xlabel(r'LMC mass ($M_{\odot}$)')
+plt.savefig("lmc_mass_none.png")
+plt.clf()
+
+
+lmc_sfr = []
+for i in range(len(secondary_subhalo)):
+    lmc_sfr.append(secondary_subhalo[i]['sfr'])
+
+print "Average SFR of LMC: ", np.mean(lmc_sfr)
+print "Standard deviation of SFR of LMC: ", np.std(lmc_sfr)
+
+plt.hist(lmc_sfr, 20)
+plt.title("SFR Distribution of LMC Subhalos")
+plt.ylabel("Number of Subhalos")
+plt.xlabel(r'LMC SFR ($M_{\odot} / yr$)')
+plt.savefig("lmc_sfr_none.png")
+plt.clf()
 
 
 tertiary_subhalo = []
 temp = []
 new_sec_sub = secondary_subhalo[:]
+new_prim_sub = primary_subhalo[:]
 x = 0
 y = 0
 for i in secondary_subhalo:
-    if y % 50 == 0:
+    if y % 500 == 0:
         print y
     for j in range(1):
         url = "http://www.illustris-project.org/api/Illustris-1/snapshots/z=0/subhalos/" + str(i['id'] + 1)
@@ -248,12 +281,14 @@ for i in secondary_subhalo:
         temp.append(tertiary_subhalo[-1])
         if (temp[x]['grnr'] != i['grnr']):
             tertiary_subhalo.remove(temp[x])
+            new_prim_sub.pop(new_sec_sub.index(i))
             new_sec_sub.remove(i)
             x += 1
             break
         elif (distance(temp[x],i) > (1000 / 0.704)):
             tertiary_subhalo.remove(temp[x])
             if (j == 0):
+                new_prim_sub.pop(new_sec_sub.index(i))
                 new_sec_sub.remove(i)
             x += 1
         else:
@@ -265,21 +300,22 @@ for i in secondary_subhalo:
 x = 0
 temp = tertiary_subhalo[:]
 temp2 = new_sec_sub[:]
+temp3 = new_prim_sub[:]
 for i in range(len(temp)):
     if temp[i]['mass'] <= 2.816 or temp[i]['mass'] >= 11.264:
         tertiary_subhalo.remove(temp[i])
         new_sec_sub.remove(temp2[i])
+        new_prim_sub.remove(temp3[i])
     x += 1
 
 print "Number of SMC analogs in systems with LMC analogs: ", len(tertiary_subhalo)
 
-
 smc_dist = []
 for i in range(len(tertiary_subhalo)):
-    smc_dist.append(distance(tertiary_subhalo[i], new_sec_sub[i]))
+    smc_dist.append(distance(tertiary_subhalo[i], new_prim_sub[i]))
 
-print np.mean(smc_dist)
-print np.std(smc_dist)
+print "Average distance of SMC: ", np.mean(smc_dist)
+print "Standard deviation of distance of SMC: ", np.std(smc_dist)
 
 mu4 = np.mean(smc_dist)
 sigma4 = np.std(smc_dist)
@@ -289,4 +325,112 @@ plt.title("Distances of SMC Subhalos")
 plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu4, sigma4))
 plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
-plt.show()
+plt.savefig("smc_dist_none.png")
+plt.clf()
+
+
+sub_smc_vel = []
+vec_smc_vel = []
+for i in tertiary_subhalo:
+    sub_smc_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
+
+halo_vel = []
+for i in new_prim_sub:
+    halo_vel.append([i['vel_x'], i['vel_y'], i['vel_z']])
+
+for i in range(len(halo_vel)):
+    vec_smc_vel.append([sub_smc_vel[i][0] - halo_vel[i][0], sub_smc_vel[i][1] - halo_vel[i][1], sub_smc_vel[i][2] - halo_vel[i][2]])
+
+smc_vel = []
+for i in vec_smc_vel:
+    smc_vel.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
+
+print "Average velocity of SMC: ", np.mean(smc_vel)
+print "Standard deviation of velocity of SMC: ", np.std(smc_vel)
+
+mu1 = np.mean(smc_vel)
+sigma1 = np.std(smc_vel)
+
+plt.hist(smc_vel, 20)
+plt.title("Velocities of SMC Subhalos")
+plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu1, sigma1))
+plt.ylabel("Number of Subhalos")
+plt.xlabel(r'Velocity $km/s$')
+plt.savefig("smc_vel_none.png")
+plt.clf()
+
+
+smc_dist = []
+for i in tertiary_subhalo:
+    smc_dist.append([i['pos_x'], i['pos_y'], i['pos_z']])
+
+halo_dist = []
+for i in new_prim_sub:
+    halo_dist.append([i['pos_x'], i['pos_y'], i['pos_z']])
+
+vec_smc_dist = []
+for i in range(len(halo_dist)):
+    vec_smc_dist.append([smc_dist[i][0] - halo_dist[i][0], smc_dist[i][1] - halo_dist[i][1], smc_dist[i][2] - halo_dist[i][2]])
+    for j in range(3):
+        if (vec_smc_dist[-1][j] > (1000 * 0.704)):
+            vec_smc_dist[-1][j] = vec_smc_dist[-1][j] - 106500 * 0.704
+
+smc_ang = []
+vec_smc_ang = np.cross(vec_smc_dist, vec_smc_vel)
+for i in vec_smc_ang:
+    smc_ang.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
+x = 0
+for i in tertiary_subhalo:
+    smc_ang[x] = i['mass'] * smc_ang[x] * 1e10 / 0.704
+    x += 1
+
+for i in range(len(smc_ang)):
+    smc_ang[i] = smc_ang[i] * 6.136e52
+
+print "Average angular momentum of SMC: ", np.mean(smc_ang)
+print "Standard deviation of angular momentum of SMC: ", np.std(smc_ang)
+
+mu3 = np.mean(smc_ang)
+sigma3 = np.std(smc_ang)
+
+plt.hist(smc_ang, 20)
+plt.title("Angular Momentum of SMC Subhalos")
+plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
+plt.xlabel(r'Angular Momentum ($kg m^2 / s$)')
+plt.ylabel('Number of Subhalos')
+plt.savefig("smc_ang_none.png")
+plt.clf()
+
+
+prim_mass = []
+smc_mass = []
+for i in range(len(tertiary_subhalo)):
+    prim_mass.append(primary_subhalo[i]['mass'] * 1e10 / 0.704)
+    smc_mass.append(tertiary_subhalo[i]['mass'] * 1e10 / 0.704)
+
+print "Average mass of SMC hosts: ", np.mean(prim_mass)
+print "Standard deviation of mass of SMC hosts: ", np.std(prim_mass)
+print "Average mass of SMC: ", np.mean(smc_mass)
+print "Standard deviation of mass of SMC: ", np.std(smc_mass)
+
+plt.hist(smc_mass, 20)
+plt.title("Mass Distribution of SMC Subhalos")
+plt.ylabel(r'Number of Subhalos')
+plt.xlabel(r'SMC mass ($M_{\odot}$)')
+plt.savefig("smc_mass_none.png")
+plt.clf()
+
+
+smc_sfr = []
+for i in range(len(tertiary_subhalo)):
+    smc_sfr.append(tertiary_subhalo[i]['sfr'])
+
+print "Average SFR of SMC: ", np.mean(smc_sfr)
+print "Standard deviation of SFR of SMC: ", np.std(smc_sfr)
+
+plt.hist(smc_sfr, 20)
+plt.title("SFR Distribution of SMC Subhalos")
+plt.ylabel("Number of Subhalos")
+plt.xlabel(r'SMC SRF ($M_{\odot} / yr$)')
+plt.savefig("smc_sfr_none.png")
+plt.clf()

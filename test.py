@@ -16,7 +16,9 @@ def get(path, params=None):
     headers = {"api-key":"7fa937edbda6181b69c3819d691ed5b0"}
     r = requests.get(path, params=params, headers=headers)
 
-    r.raise_for_status()
+    if r.status_code != requests.codes.ok:
+        r = requests.get(path, params=params, headers=headers)
+        r.raise_for_status()
 
     if r.headers['content-type'] == 'application/json':
         return r.json()
@@ -29,8 +31,8 @@ def get(path, params=None):
 
     return r
 
-mass_min = 1 * 10**12.0 / 1e10 * 0.704
-mass_max = 1.1 * 10**12.0 / 1e10 * 0.704
+mass_min = 0.43 * 10**12.0 / 1e10 * 0.704
+mass_max = 4.3 * 10**12.0 / 1e10 * 0.704
 
 search_query = "?mass__gt=" + str(mass_min) + "&mass__lt=" + str(mass_max)
 
@@ -167,6 +169,7 @@ plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu1, sigma1))
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
 plt.savefig("lmc_vel.png")
+plt.clf()
 
 
 sub_dist = []
@@ -200,6 +203,7 @@ plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu2, sigma2))
 plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
 plt.savefig("lmc_dist.png")
+plt.clf()
 
 ang = []
 vec_ang = np.cross(vec_dist, vec_vel)
@@ -225,6 +229,7 @@ plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
 plt.xlabel(r'Angular Momentum ($kg m^2 / s$)')
 plt.ylabel('Number of Subhalos')
 plt.savefig("lmc_ang.png")
+plt.clf()
 
 
 prim_mass = []
@@ -243,6 +248,7 @@ plt.title("Mass Distribution of LMC Subhalos")
 plt.ylabel(r'Number of Subhalos')
 plt.xlabel(r'LMC mass ($M_{\odot}$)')
 plt.savefig("lmc_mass.png")
+plt.clf()
 
 
 lmc_sfr = []
@@ -255,9 +261,9 @@ print "Standard deviation of SFR of LMC: ", np.std(lmc_sfr)
 plt.hist(lmc_sfr, 20)
 plt.title("SFR Distribution of LMC Subhalos")
 plt.ylabel("Number of Subhalos")
-plt.xlabel(r'LMC SRF ($M_{\odot} / yr$)')
+plt.xlabel(r'LMC SFR ($M_{\odot} / yr$)')
 plt.savefig("lmc_sfr.png")
-
+plt.clf()
 
 
 tertiary_subhalo = []
@@ -321,7 +327,7 @@ plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu4, sigma4))
 plt.xlabel(r'Distance ($kpc$)')
 plt.ylabel('Number of Subhalos')
 plt.savefig("smc_dist.png")
-
+plt.clf()
 
 
 sub_smc_vel = []
@@ -352,7 +358,7 @@ plt.text(x, y, r'$\mu={},\ \sigma={}$'.format(mu1, sigma1))
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'Velocity $km/s$')
 plt.savefig("smc_vel.png")
-
+plt.clf()
 
 
 smc_dist = []
@@ -376,11 +382,11 @@ for i in vec_smc_ang:
     smc_ang.append(np.sqrt(i[0]**2 + i[1]**2 + i[2]**2))
 x = 0
 for i in tertiary_subhalo:
-    smc_ang[x] = i['mass'] * smc_ang[x]
+    smc_ang[x] = i['mass'] * smc_ang[x] * 1e10 / 0.704
     x += 1
 
 for i in range(len(smc_ang)):
-    smc_ang[i] = smc_ang[i] * 3.086e16 * 1.99e30
+    smc_ang[i] = smc_ang[i] * 6.136e52
 
 print "Average angular momentum of SMC: ", np.mean(smc_ang)
 print "Standard deviation of angular momentum of SMC: ", np.std(smc_ang)
@@ -391,9 +397,10 @@ sigma3 = np.std(smc_ang)
 plt.hist(smc_ang, 20)
 plt.title("Angular Momentum of SMC Subhalos")
 plt.text(mu3, sigma3, r'$\mu={},\ \sigma={}$'.format(mu3, sigma3))
-plt.xlabel(r'Angular Momentum ($M_{\odot} kpc^2 / s$)')
+plt.xlabel(r'Angular Momentum ($kg m^2 / s$)')
 plt.ylabel('Number of Subhalos')
 plt.savefig("smc_ang.png")
+plt.clf()
 
 
 prim_mass = []
@@ -404,16 +411,15 @@ for i in range(len(tertiary_subhalo)):
 
 print "Average mass of SMC hosts: ", np.mean(prim_mass)
 print "Standard deviation of mass of SMC hosts: ", np.std(prim_mass)
-print "Average SFR of LMC: ", np.mean(smc_mass)
+print "Average mass of SMC: ", np.mean(smc_mass)
 print "Standard deviation of mass of SMC: ", np.std(smc_mass)
 
 plt.hist(smc_mass, 20)
 plt.title("Mass Distribution of SMC Subhalos")
 plt.ylabel(r'Number of Subhalos')
-plt.xlabel(r'LMC mass ($M_{\odot}$)')
+plt.xlabel(r'SMC mass ($M_{\odot}$)')
 plt.savefig("smc_mass.png")
-plt.show()
-
+plt.clf()
 
 
 smc_sfr = []
@@ -428,3 +434,4 @@ plt.title("SFR Distribution of SMC Subhalos")
 plt.ylabel("Number of Subhalos")
 plt.xlabel(r'SMC SRF ($M_{\odot} / yr$)')
 plt.savefig("smc_sfr.png")
+plt.clf()
